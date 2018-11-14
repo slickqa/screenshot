@@ -11,22 +11,31 @@ import (
 	"unsafe"
 )
 
-func ScreenRect() (image.Rectangle, error) {
+type coreScreenshotUtility struct {}
+
+func CreateScreenshotUtility() (ScreenshotUtil, error) {
+	return &coreScreenshotUtility{}, nil
+}
+
+func (c *coreScreenshotUtility) Close() {
+}
+
+func (c *coreScreenshotUtility) ScreenRect() (image.Rectangle, error) {
 	displayID := C.CGMainDisplayID()
 	width := int(C.CGDisplayPixelsWide(displayID))
 	height := int(C.CGDisplayPixelsHigh(displayID))
 	return image.Rect(0, 0, width, height), nil
 }
 
-func CaptureScreen() (*image.RGBA, error) {
-	rect, err := ScreenRect()
+func (c *coreScreenshotUtility) CaptureScreen() (*image.RGBA, error) {
+	rect, err := c.ScreenRect()
 	if err != nil {
 		return nil, err
 	}
-	return CaptureRect(rect)
+	return c.CaptureRect(rect)
 }
 
-func CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
+func (c *coreScreenshotUtility) CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
 	displayID := C.CGMainDisplayID()
 	width := int(C.CGDisplayPixelsWide(displayID))
 	rawData := C.CGDataProviderCopyData(C.CGImageGetDataProvider(C.CGDisplayCreateImage(displayID)))

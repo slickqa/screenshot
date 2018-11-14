@@ -1,44 +1,46 @@
 package screenshot
 
 import (
+	"fmt"
 	"image"
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 )
 
-func ScreenRect() (image.Rectangle, error) {
+type xScreenshotUtil struct {
+	conn *xgb.Conn
+}
+
+func CreateScreenshotUtility() (ScreenshotUtil, error) {
 	c, err := xgb.NewConn()
 	if err != nil {
-		return image.Rectangle{}, err
+		return nil, fmt.Errorf("error connecting to X: %s", err.Error())
 	}
-	defer c.Close()
+	return &xScreenshotUtil{conn: c}, nil
+}
 
-	screen := xproto.Setup(c).DefaultScreen(c)
+func (s *xScreenshotUtil) Close() {
+	s.conn.Close()
+}
+
+func (s *xScreenshotUtil) ScreenRect() (image.Rectangle, error) {
+	screen := xproto.Setup(s.conn).DefaultScreen(s.conn)
 	x := screen.WidthInPixels
 	y := screen.HeightInPixels
 
 	return image.Rect(0, 0, int(x), int(y)), nil
 }
 
-func CaptureScreen() (*image.RGBA, error) {
-	r, e := ScreenRect()
-	if e != nil {
-		return nil, e
-	}
+func (s *xScreenshotUtil) CaptureScreen() (*image.RGBA, error) {
+	r := ScreenRect()
 	return CaptureRect(r)
 }
 
-func CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
-	c, err := xgb.NewConn()
-	if err != nil {
-		return nil, err
-	}
-	defer c.Close()
-
-	screen := xproto.Setup(c).DefaultScreen(c)
+func (s *xScreenshotUtil) CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
+	screen := xproto.Setup(s.conn).DefaultScreen(s.conn)
 	x, y := rect.Dx(), rect.Dy()
-	xImg, err := xproto.GetImage(c, xproto.ImageFormatZPixmap, xproto.Drawable(screen.Root), int16(rect.Min.X), int16(rect.Min.Y), uint16(x), uint16(y), 0xffffffff).Reply()
+	xImg, err := xproto.GetImage(s.conn, xproto.ImageFormatZPixmap, xproto.Drawable(screen.Root), int16(rect.Min.X), int16(rect.Min.Y), uint16(x), uint16(y), 0xffffffff).Reply()
 	if err != nil {
 		return nil, err
 	}

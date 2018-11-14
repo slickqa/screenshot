@@ -8,7 +8,16 @@ import (
 	"unsafe"
 )
 
-func ScreenRect() (image.Rectangle, error) {
+type winScreenshotUtility struct {}
+
+func CreateScreenshotUtility() (ScreenshotUtil, error) {
+	return &winScreenshotUtility{}, nil
+}
+
+func (w *winScreenshotUtility) Close() {
+}
+
+func (w *winScreenshotUtility) ScreenRect() (image.Rectangle, error) {
 	hDC := GetDC(0)
 	if hDC == 0 {
 		return image.Rectangle{}, fmt.Errorf("Could not Get primary display err:%d\n", GetLastError())
@@ -19,7 +28,7 @@ func ScreenRect() (image.Rectangle, error) {
 	return image.Rect(0, 0, x, y), nil
 }
 
-func CaptureScreen() (*image.RGBA, error) {
+func (w *winScreenshotUtility) CaptureScreen() (*image.RGBA, error) {
 	r, e := ScreenRect()
 	if e != nil {
 		return nil, e
@@ -27,7 +36,7 @@ func CaptureScreen() (*image.RGBA, error) {
 	return CaptureRect(r)
 }
 
-func CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
+func (w *winScreenshotUtility) CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
 	hDC := GetDC(0)
 	if hDC == 0 {
 		return nil, fmt.Errorf("Could not Get primary display err:%d.\n", GetLastError())
