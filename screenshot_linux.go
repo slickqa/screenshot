@@ -33,8 +33,11 @@ func (s *xScreenshotUtil) ScreenRect() (image.Rectangle, error) {
 }
 
 func (s *xScreenshotUtil) CaptureScreen() (*image.RGBA, error) {
-	r := ScreenRect()
-	return CaptureRect(r)
+	r, err := s.ScreenRect()
+	if err != nil {
+		return nil, err
+	}
+	return s.CaptureRect(r)
 }
 
 func (s *xScreenshotUtil) CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
